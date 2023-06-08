@@ -16,15 +16,13 @@ spi = SPI(0, sck=clk_pin, mosi=din_pin)
 # Create an SSD1309 OLED object
 oled = Display(spi, dc=dc_pin, cs=cs_pin, rst=rst_pin)
 
-# Initialize the OLED
-#oled.init_display()
-#oled.clear_display()
-
 # Font
 font = XglcdFont('fonts/ArcadePix9x11.c', 9, 11)
 
-# Display "Hello World!"
-oled.draw_text(oled.width//2, oled.height//2, "Hello", font)
+# Display stuff to the OLED
+text = "Victor"
+text_len = font.measure_text(text)
+oled.draw_text(oled.width//2 , oled.height//2 - text_len//2, text, font, rotate=90)
 oled.present()
 
 sleep(10)
