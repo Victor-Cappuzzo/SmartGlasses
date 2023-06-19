@@ -41,10 +41,10 @@ while True:
         
         # Display message to the OLED
         text_len = font.measure_text(message)
-        oled.draw_text(oled.width//2 , oled.height//2 - text_len//2, message, font, rotate=180)
+        oled.draw_text(oled.width//2 + text_len//2, oled.height//2, message, font, rotate=180)
         oled.present()
 
         sleep(10)
 
-        oled.cleanup()
+        oled.clear()
         
