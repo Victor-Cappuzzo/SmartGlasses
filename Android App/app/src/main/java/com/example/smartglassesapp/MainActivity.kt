@@ -13,11 +13,16 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.ViewModelProvider
 import com.example.smartglassesapp.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
+import androidx.lifecycle.Observer
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var messageEditText: EditText? = null
     private var sendButton: Button? = null
+    private val model = ViewModelProvider(this).get(AppViewModel::class.java)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,6 +88,18 @@ class MainActivity : AppCompatActivity() {
             //SendMessageThread(message).start()
             SendMessageThread(message).start()
         }
+
+        // Update date and time
+        model.updateDateAndTime()
+
+        // Set observer for the current date/time
+        val dateTimeObserver = Observer<String> {newDateTime ->
+            SendMessageThread(newDateTime)
+        }
+
+        // Set the dateTimeObserver to changes in the date and time
+        model.getDateAndTime().observe(this, dateTimeObserver)
+
     }
 
     inner class SendMessageThread(val message: String): Thread() {
