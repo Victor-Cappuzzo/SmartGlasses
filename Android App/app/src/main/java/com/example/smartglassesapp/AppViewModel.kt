@@ -10,6 +10,8 @@ import kotlinx.coroutines.*
 import java.lang.Math.abs
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
 class AppViewModel: ViewModel() {
 
@@ -17,51 +19,26 @@ class AppViewModel: ViewModel() {
     private val currentDateTimeLiveData = MutableLiveData<String>()
     private var currentDateTimeLocal = ""
     private var currentTime: Long = 0
-    private val sdf = SimpleDateFormat("'Date\n'dd-MM-yyyy '\n\nand\n\nTime\n'HH:mm:ss z")
+    private val sdf = SimpleDateFormat("Date dd-MM-yyyy Time HH:mm:ss z")
 
-    private lateinit var viewModelJob: Job
-    private lateinit var ioScope: CoroutineScope
     private val updateTime: Long = 1000
-
-    init {
-        viewModelJob = Job()
-        ioScope = CoroutineScope(Dispatchers.IO + viewModelJob)
-        currentTime = Date().time
-    }
+    private var viewModelJob: Job = Job()
+    //private lateinit var ioScope: CoroutineScope
+    private val coroutineContext: CoroutineContext
+        get() = viewModelJob + Dispatchers.Main
 
     // Get the current date and time, and keep these values updated
-    fun updateDateAndTime() {
+    fun updateDateAndTime(callback: (String) -> Unit) {
 
-        // Cancel the job object in case the user wants to start it again
         viewModelJob.cancel()
 
-        // Launch returns a Job object that w can then use to cancel the coroutine
-        viewModelJob = CoroutineScope(Dispatchers.IO).launch {
+        viewModelJob = CoroutineScope(coroutineContext).launch {
 
-            // Start async process
-            async {
-
-                // Run this loop infinitely
-                while (true) {
-
-                    // Get current time
-                    var tempTime: Long = Date().time
-
-                    // Check if we need to update the date and time
-                    if (abs(tempTime - currentTime) < updateTime) {
-
-                        // Update the date and time
-                        currentTime = tempTime
-                        currentDateTimeLocal = sdf.format(Date())
-                        currentDateTimeLiveData.postValue(currentDateTimeLocal)
-
-                        // Update on UI thread
-                        withContext(Dispatchers.Main) {
-                            getDateAndTime()
-                        }
-
-                    }
-                }
+            while (true) {
+                val currentDateTime = sdf.format(Date())
+                currentDateTimeLiveData.postValue((currentDateTime))
+                callback(currentDateTime) // Pass the message back to MainActivity
+                delay(updateTime)
             }
         }
 

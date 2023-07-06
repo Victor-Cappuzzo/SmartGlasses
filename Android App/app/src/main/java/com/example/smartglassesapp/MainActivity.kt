@@ -34,13 +34,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var messageEditText: EditText? = null
     private var sendButton: Button? = null
-    private val model = ViewModelProvider(this).get(AppViewModel::class.java)
+    lateinit var model: AppViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Initialize view model
+        model = ViewModelProvider(this).get(AppViewModel::class.java)
 
         // Variable initialization
         messageEditText = binding.messageEditText
@@ -85,20 +88,25 @@ class MainActivity : AppCompatActivity() {
             val message = messageEditText!!.text.toString()
 
             // Start thread to send messages
-            //SendMessageThread(message).start()
             SendMessageThread(message).start()
         }
 
         // Update date and time
-        model.updateDateAndTime()
+        //model.updateDateAndTime()
+        model.updateDateAndTime { message ->
+            SendMessageThread(message).start()
+        }
 
+        /*
         // Set observer for the current date/time
         val dateTimeObserver = Observer<String> {newDateTime ->
-            SendMessageThread(newDateTime)
+            SendMessageThread(newDateTime).start()
         }
 
         // Set the dateTimeObserver to changes in the date and time
         model.getDateAndTime().observe(this, dateTimeObserver)
+
+         */
 
     }
 
