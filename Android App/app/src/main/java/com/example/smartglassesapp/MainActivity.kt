@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.Message
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModelProvider
@@ -33,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bluetoothDevice: BluetoothDevice
     private lateinit var binding: ActivityMainBinding
     private var messageEditText: EditText? = null
+    private var timeTextView: TextView? = null
     private var sendButton: Button? = null
     lateinit var model: AppViewModel
 
@@ -47,6 +49,7 @@ class MainActivity : AppCompatActivity() {
 
         // Variable initialization
         messageEditText = binding.messageEditText
+        timeTextView = binding.timeTextView
         sendButton = binding.sendButton
 
         // Set up bluetooth adapter
@@ -88,16 +91,26 @@ class MainActivity : AppCompatActivity() {
             val message = messageEditText!!.text.toString()
 
             // Start thread to send messages
-            SendMessageThread(message).start()
+            SendMessageThread("M:::$message").start()
         }
 
+        // Set observer for the current time and date value
+        val dateTimeObserver = Observer<String> {newDateTime ->
+            timeTextView!!.text = newDateTime
+            SendMessageThread("T:::$newDateTime").start()
+        }
+
+        model.getDateAndTime().observe(this, dateTimeObserver)
+
+        model.updateDateAndTime(timeTextView!!)
+
+        /*
         // Update date and time
         //model.updateDateAndTime()
         model.updateDateAndTime { message ->
             SendMessageThread(message).start()
         }
 
-        /*
         // Set observer for the current date/time
         val dateTimeObserver = Observer<String> {newDateTime ->
             SendMessageThread(newDateTime).start()

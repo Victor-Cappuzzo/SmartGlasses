@@ -1,5 +1,6 @@
 package com.example.smartglassesapp
 
+import android.widget.TextView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -16,11 +17,44 @@ import kotlin.coroutines.coroutineContext
 class AppViewModel: ViewModel() {
 
     // Variable declarations
+    //private val sdf = SimpleDateFormat("dd-MM-yyyy HH:mm:ss z")
+    private val sdf = SimpleDateFormat("HH:mm z")
     private val currentDateTimeLiveData = MutableLiveData<String>()
-    private var currentDateTimeLocal = ""
+    private var currentDateTimeLocal = sdf.format(Date())
+    //private var currentDateTimeLocal = ""
     private var currentTime: Long = 0
-    private val sdf = SimpleDateFormat("Date dd-MM-yyyy Time HH:mm:ss z")
 
+    private val delay: Long = 60000
+    private lateinit var viewModelJob: Job
+    private lateinit var ioScope: CoroutineScope
+
+    init {
+        viewModelJob = Job()
+        ioScope = CoroutineScope(Dispatchers.IO + viewModelJob)
+        currentDateTimeLiveData.postValue(currentDateTimeLocal)
+    }
+
+    // Get the current date and time, and keep these values updated
+    fun updateDateAndTime(dateTimeTextView: TextView) {
+
+        viewModelJob.cancel()
+
+        viewModelJob = CoroutineScope(Dispatchers.IO).launch {
+
+            while (true) {
+                currentDateTimeLocal = sdf.format(Date())
+                currentDateTimeLiveData.postValue(currentDateTimeLocal)
+
+                withContext(Dispatchers.Main) {
+                    dateTimeTextView.text = currentDateTimeLiveData.value
+                }
+
+                delay(delay)
+            }
+        }
+    }
+
+    /*
     private val updateTime: Long = 1000
     private var viewModelJob: Job = Job()
     //private lateinit var ioScope: CoroutineScope
@@ -41,8 +75,9 @@ class AppViewModel: ViewModel() {
                 delay(updateTime)
             }
         }
-
     }
+
+     */
 
     // Returns the current date and time
     fun getDateAndTime(): LiveData<String> {

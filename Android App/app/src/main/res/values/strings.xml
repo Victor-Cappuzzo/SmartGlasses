@@ -2,4 +2,5 @@
     <string name="app_name">SmartGlassesApp</string>
     <string name="enter_message">Enter a Message: </string>
     <string name="send_message">Send Message</string>
+    <string name="time">"Date and Time: "</string>
 </resources>
