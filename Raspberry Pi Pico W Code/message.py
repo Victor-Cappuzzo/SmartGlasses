@@ -11,7 +11,7 @@ import time
 class Message():
 
     # Initialization
-    def __init__(self, message, x_pos, y_pos, font, rot, horz_offset, vert_offset, scroll_time, scroll_speed, oled, screen_width, screen_height):
+    def __init__(self, message, x_pos, y_pos, font, rot, horz_offset, vert_offset, scroll_time, scroll_speed, oled):
         
         self.message = message
         self.x_pos = x_pos
@@ -23,28 +23,32 @@ class Message():
         self.scroll_time = scroll_time
         self.scroll_speed = scroll_speed
         self.oled = oled
-        self.screen_width = screen_width
-        self.screen_height = screen_height
 
         self.scrollable = False
         self.start_time = time.time()
-        self.message_len = self.font.mesure_text(self.message)
+        self.message_len = self.font.measure_text(self.message)
+    
+    # Sets the message of the object and updates its length
+    def setMessage(self, m):
+        
+        self.message = m
+        self.message_len = self.font.measure_text(m)
     
     # Determine if the message is scrollable (does not fit in the bounds of the screen)
     def determineScrollable(self):
-
+        
         # If the message does not fit on the screen, make it scrollable
-        if self.message_len > self.screen_width:
+        if self.message_len > self.oled.height:
             
             self.scrollable = True
 
             # Pad the message at the beginning with spaces so that the message starts in the middle of the screen
-            num_spaces = self.message_len // 2
+            num_spaces = len(self.message) // 2
             for _ in range(num_spaces):
                 self.message = " " + self.message
 
             # Update the message length
-            self.message_len = self.font.mesure_text(self.message)
+            self.message_len = self.font.measure_text(self.message)
         
         # If the message does fit on the screen, scrolling is not necessary
         else:
@@ -52,8 +56,8 @@ class Message():
             self.scrollable = False
 
     # Draw the message (if it is scrollable, update the messages movement)
-    def draw_message(self):
-
+    def drawMessage(self):
+        
         # If the message is scrollable
         if self.scrollable:
 
@@ -71,4 +75,6 @@ class Message():
 
         
         # Draw the message
-        self.oled.draw_text(self.oled.width//3 + round(self.message_len*self.horz_offset), self.oled.height//2 + round(self.message_len*self.vert_offset), self.message, self.font, rotate=self.rot)
+        self.oled.draw_text(self.x_pos + round(self.message_len*self.horz_offset), self.y_pos + round(self.message_len*self.vert_offset), self.message, self.font, rotate=self.rot)
+        #self.oled.present()
+

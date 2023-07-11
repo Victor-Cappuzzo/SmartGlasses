@@ -2,6 +2,7 @@ from machine import Pin, SPI, UART
 from ssd1309 import Display
 from xglcd_font import XglcdFont
 from time import sleep
+from message import Message
 
 # Define screen orientation and text offsets
 rot = 90
@@ -21,7 +22,6 @@ if rot == 180:
 if rot == 270:
     horz_offset = 0
     vert_offset = 0.5
-
 
 # Define pins for OLED
 din_pin = machine.Pin(19)
@@ -43,14 +43,27 @@ spi = SPI(0, sck=clk_pin, mosi=din_pin)
 # Create an SSD1309 OLED object
 oled = Display(spi, dc=dc_pin, cs=cs_pin, rst=rst_pin)
 
-# Font
+# Define a font
 #font = XglcdFont('fonts/ArcadePix9x11.c', 9, 11)
 font = XglcdFont('fonts/Bally5x8.c', 5, 8)
 
-# Define global variables for stuff to display
-CODE_LEN = 4
-time = ""
-typed_message = ""
+# Define global variables for display parameters
+CODE_LEN = 4 # length of code delimiter
+SCROLL_TIME = 1 # time needed to pass for the text to move when scrolling [seconds]
+
+# Define typed message
+typed_x_pos = 2*oled.width//3
+typed_y_pos = oled.height//2
+#typed_message = ""
+typed_message = Message("", typed_x_pos, typed_y_pos, font, rot, horz_offset, vert_offset, SCROLL_TIME, oled)
+
+# Define time message
+time_x_pos = oled.width//3
+time_y_pos = oled.height//2
+#time = ""
+time_message = Message("", time_x_pos, time_y_pos, font, rot, horz_offset, vert_offset, SCROLL_TIME, oled)
+
+
 
 # Recieve UART messages
 while True:
@@ -71,6 +84,7 @@ while True:
         # Determine what the message code is
         code = message[0:CODE_LEN]
         
+        """
         # If the message code is M::: --> typed message
         if code == "M:::":
             
@@ -82,6 +96,7 @@ while True:
         text_len = font.measure_text(typed_message)
         oled.draw_text(2*oled.width//3 + round(text_len*horz_offset), oled.height//2 + round(text_len*vert_offset), typed_message, font, rotate=rot)
         #oled.present()
+        
             
         # If the message code is T::: --> time
         if code == "T:::":
@@ -92,11 +107,41 @@ while True:
         # Display time to the OLED
         text_len = font.measure_text(time)
         oled.draw_text(oled.width//3 + round(text_len*horz_offset), oled.height//2 + round(text_len*vert_offset), time, font, rotate=rot)
-        #oled.draw_text(oled.width//2, oled.height//2 - text_len//2, time, font, rotate=rot)
+        """
         
-        oled.present()
+        # If the message code is M::: --> typed message
+        if code == "M:::":
+            
+            # Update the typed message variable
+            typed_message.setMessage(message[CODE_LEN:len(message)])
+            
+            # Check if the message is scrollable
+            typed_message.determineScrollable()
+        
+        # If the message code is T::: --> time
+        if code == "T:::":
+            
+            # Update the time variable
+            time_message.setMessage(message[CODE_LEN:len(message)])
+            
+            # Check if the message is scrollable
+            time_message.determineScrollable()
+            
+    # Concatenate all messages into an array
+    message_array = [typed_message, time_message]
+        
+    # Loop through each message
+    for m in message_array:
+        
+        # Check if the message is scrollable
+        #m.determineScrollable()
+        
+        # Draw the message
+        m.drawMessage()
+    
+    
+    oled.present()
+        
+    
 
-        #sleep(10)
-
-        #oled.clear()
         

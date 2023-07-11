@@ -78,24 +78,24 @@ class MainActivity : AppCompatActivity() {
                     return
                 }
 
-                // If the devices name is "HC-06", then set it as our device
-                if (device.name == "HC-06") {
-                    bluetoothDevice = device
-                    break
-                }
+            // If the devices name is "HC-06", then set it as our device
+            if (device.name == "HC-06") {
+                bluetoothDevice = device
+                break
             }
         }
+    }
 
-        // Listen for if the send button is pressed
-        sendButton!!.setOnClickListener {
-            val message = messageEditText!!.text.toString()
+    // Listen for if the send button is pressed
+    sendButton!!.setOnClickListener {
+        val message = messageEditText!!.text.toString()
 
-            // Start thread to send messages
-            SendMessageThread("M:::$message").start()
-        }
+        // Start thread to send messages
+        SendMessageThread("M:::$message").start()
+    }
 
-        // Set observer for the current time and date value
-        val dateTimeObserver = Observer<String> {newDateTime ->
+    // Set observer for the current time and date value
+    val dateTimeObserver = Observer<String> {newDateTime ->
             timeTextView!!.text = newDateTime
             SendMessageThread("T:::$newDateTime").start()
         }
