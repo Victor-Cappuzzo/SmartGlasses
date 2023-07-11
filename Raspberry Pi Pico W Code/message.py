@@ -11,7 +11,7 @@ import time
 class Message():
 
     # Initialization
-    def __init__(self, message, x_pos, y_pos, font, rot, horz_offset, vert_offset, scroll_time, scroll_speed, oled):
+    def __init__(self, message, x_pos, y_pos, font, rot, horz_offset, vert_offset, scroll_time, oled):
         
         self.message = message
         self.x_pos = x_pos
@@ -21,7 +21,6 @@ class Message():
         self.horz_offset = horz_offset
         self.vert_offset = vert_offset
         self.scroll_time = scroll_time
-        self.scroll_speed = scroll_speed
         self.oled = oled
 
         self.scrollable = False
@@ -67,8 +66,8 @@ class Message():
             # Check if the timer has surpassed the scroll time
             if current_time - self.start_time >= self.scroll_time:
 
-                # Take a space from the beginning of the message and move it to the end
-                self.message = self.message[1: len(self.message)] + " "
+                # Take a character from the beginning of the message and move it to the end
+                self.message = self.message[1: len(self.message)] + self.message[0]
 
                 # Reset the start timer to the current time (keeps track of elapsed time)
                 self.start_time = current_time

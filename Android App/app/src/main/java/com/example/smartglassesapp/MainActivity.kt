@@ -4,6 +4,8 @@ import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -36,7 +38,13 @@ class MainActivity : AppCompatActivity() {
     private var messageEditText: EditText? = null
     private var timeTextView: TextView? = null
     private var sendButton: Button? = null
+    private var batteryTextView: TextView? = null
+    private var chargingTextView: TextView? = null
     lateinit var model: AppViewModel
+
+    private val messageQueue: Queue<String> = LinkedList()
+    private var isSending: Boolean = false
+    private val messageLock = Object()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +59,8 @@ class MainActivity : AppCompatActivity() {
         messageEditText = binding.messageEditText
         timeTextView = binding.timeTextView
         sendButton = binding.sendButton
+        batteryTextView = binding.batteryTextView
+        chargingTextView = binding.chargingTextView
 
         // Set up bluetooth adapter
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -68,59 +78,137 @@ class MainActivity : AppCompatActivity() {
                         Manifest.permission.BLUETOOTH_CONNECT
                     ) != PackageManager.PERMISSION_GRANTED
                 ) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
                     return
                 }
 
-            // If the devices name is "HC-06", then set it as our device
-            if (device.name == "HC-06") {
-                bluetoothDevice = device
-                break
+                // If the devices name is "HC-06", then set it as our device
+                if (device.name == "HC-06") {
+                    bluetoothDevice = device
+                    break
+                }
             }
         }
-    }
 
-    // Listen for if the send button is pressed
-    sendButton!!.setOnClickListener {
-        val message = messageEditText!!.text.toString()
+        // Listen for if the send button is pressed
+        sendButton!!.setOnClickListener {
+            val message = messageEditText!!.text.toString()
 
-        // Start thread to send messages
-        SendMessageThread("M:::$message").start()
-    }
+            synchronized(messageLock) {
+                // Add message to the queue
+                messageQueue.offer("M:::$message")
 
-    // Set observer for the current time and date value
-    val dateTimeObserver = Observer<String> {newDateTime ->
-            timeTextView!!.text = newDateTime
-            SendMessageThread("T:::$newDateTime").start()
+                // Start sending if not already sending
+                if (!isSending) {
+                    isSending = true
+                    sendNextMessage()
+                }
+            }
         }
 
-        model.getDateAndTime().observe(this, dateTimeObserver)
 
-        model.updateDateAndTime(timeTextView!!)
-
-        /*
-        // Update date and time
-        //model.updateDateAndTime()
-        model.updateDateAndTime { message ->
-            SendMessageThread(message).start()
-        }
-
-        // Set observer for the current date/time
+        // Set observer for the current time and date value
         val dateTimeObserver = Observer<String> {newDateTime ->
-            SendMessageThread(newDateTime).start()
-        }
+                timeTextView!!.text = newDateTime
 
-        // Set the dateTimeObserver to changes in the date and time
+            synchronized(messageLock) {
+                // Add message to the queue
+                messageQueue.offer("T:::$newDateTime")
+
+                // Start sending if not already sending
+                if (!isSending) {
+                    isSending = true
+                    sendNextMessage()
+                }
+            }
+            }
         model.getDateAndTime().observe(this, dateTimeObserver)
 
-         */
+        // Start updating the date and time
+        model.updateDateAndTime()
 
+
+        // Set observer for the current battery percentage
+        val batteryPercentObserver = Observer<Int> {newPercent ->
+            batteryTextView!!.text = "$newPercent%"
+
+            synchronized(messageLock) {
+                // Add message to the queue
+                messageQueue.offer("P:::$newPercent%")
+
+                // Start sending if not already sending
+                if (!isSending) {
+                    isSending = true
+                    sendNextMessage()
+                }
+            }
+        }
+        model.getBatteryPercent().observe(this, batteryPercentObserver)
+
+        // Start updating the battery percentage
+        model.updateBatteryPercent(applicationContext)
+
+
+        // Set observer for the current battery charging status
+        val batteryChargingObserver = Observer<Boolean> {isCharging ->
+
+            // If the phone is charging
+            if (isCharging) {
+                chargingTextView!!.text = "ON"
+
+                synchronized(messageLock) {
+                    // Add message to the queue
+                    messageQueue.offer("C:::ON")
+
+                    // Start sending if not already sending
+                    if (!isSending) {
+                        isSending = true
+                        sendNextMessage()
+                    }
+                }
+            }
+
+            // If the phone is not charging
+            else {
+                chargingTextView!!.text = "OFF"
+
+                synchronized(messageLock) {
+                    // Add message to the queue
+                    messageQueue.offer("C:::OFF")
+
+                    // Start sending if not already sending
+                    if (!isSending) {
+                        isSending = true
+                        sendNextMessage()
+                    }
+                }
+            }
+
+        }
+        model.getBatteryCharging().observe(this, batteryChargingObserver)
+
+        // Start updating the battery charging status
+        model.updateBatteryCharging(applicationContext)
+
+    }
+
+    // Sends the next message in the queue
+    private fun sendNextMessage() {
+
+        synchronized(messageLock) {
+
+            // If there are messages in the queue
+            if (messageQueue.isNotEmpty()) {
+                val message = messageQueue.poll()
+
+                // Start thread to send message
+                SendMessageThread(message).start()
+            }
+
+            // If there are no more messages in the queue
+            else {
+                isSending = false
+            }
+        }
     }
 
     inner class SendMessageThread(val message: String): Thread() {
@@ -128,6 +216,15 @@ class MainActivity : AppCompatActivity() {
             try {
                 // HC-06 UUID
                 val uuid: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+
+                // Permission check
+                if (ActivityCompat.checkSelfPermission(
+                        applicationContext,
+                        Manifest.permission.BLUETOOTH_CONNECT
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    return
+                }
 
                 // Set up and connect socket
                 bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(uuid)
@@ -146,6 +243,9 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (e: IOException) {
                 e.printStackTrace()
+            } finally {
+                // Send next message in the queue
+                sendNextMessage()
             }
         }
     }

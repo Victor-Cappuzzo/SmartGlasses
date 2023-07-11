@@ -3,4 +3,6 @@
     <string name="enter_message">Enter a Message: </string>
     <string name="send_message">Send Message</string>
     <string name="time">"Date and Time: "</string>
+    <string name="battery_percent">"Battery %: "</string>
+    <string name="charging">"Charging: "</string>
 </resources>

@@ -52,17 +52,30 @@ CODE_LEN = 4 # length of code delimiter
 SCROLL_TIME = 1 # time needed to pass for the text to move when scrolling [seconds]
 
 # Define typed message
-typed_x_pos = 2*oled.width//3
+typed_x_pos = 4*oled.width//5
 typed_y_pos = oled.height//2
-#typed_message = ""
 typed_message = Message("", typed_x_pos, typed_y_pos, font, rot, horz_offset, vert_offset, SCROLL_TIME, oled)
 
 # Define time message
-time_x_pos = oled.width//3
+time_x_pos = 3*oled.width//5
 time_y_pos = oled.height//2
-#time = ""
 time_message = Message("", time_x_pos, time_y_pos, font, rot, horz_offset, vert_offset, SCROLL_TIME, oled)
 
+# Define battery percentage message
+batper_x_pos = 2*oled.width//5
+batper_y_pos = oled.height//2
+batper_message = Message("", batper_x_pos, batper_y_pos, font, rot, horz_offset, vert_offset, SCROLL_TIME, oled)
+
+# Define battery charging message
+charge_x_pos = oled.width//5
+charge_y_pos = oled.height//2
+charge_message = Message("", charge_x_pos, charge_y_pos, font, rot, horz_offset, vert_offset, SCROLL_TIME, oled)
+
+# Define code array (NOTE: messages in the message_array must be in the same order as the code_array!)
+code_array = ["M:::", "T:::", "P:::", "C:::"]
+
+# Define message array
+message_array = [typed_message, time_message, batper_message, charge_message]
 
 
 # Recieve UART messages
@@ -89,30 +102,6 @@ while True:
         if code == "M:::":
             
             # Update the typed message variable
-            typed_message = message[CODE_LEN:len(message)]
-            
-            
-        # Display typed message to the OLED
-        text_len = font.measure_text(typed_message)
-        oled.draw_text(2*oled.width//3 + round(text_len*horz_offset), oled.height//2 + round(text_len*vert_offset), typed_message, font, rotate=rot)
-        #oled.present()
-        
-            
-        # If the message code is T::: --> time
-        if code == "T:::":
-            
-            # Update the time variable
-            time = message[CODE_LEN:len(message)]
-        
-        # Display time to the OLED
-        text_len = font.measure_text(time)
-        oled.draw_text(oled.width//3 + round(text_len*horz_offset), oled.height//2 + round(text_len*vert_offset), time, font, rotate=rot)
-        """
-        
-        # If the message code is M::: --> typed message
-        if code == "M:::":
-            
-            # Update the typed message variable
             typed_message.setMessage(message[CODE_LEN:len(message)])
             
             # Check if the message is scrollable
@@ -127,8 +116,27 @@ while True:
             # Check if the message is scrollable
             time_message.determineScrollable()
             
+        # If the message code is P::: --> battery percentage
+        if code == "P:::":
+            
+            # Update the battery percentage variable
+            batper_message.setMessage(message[CODE_LEN:len(message)])
+            
+            # Check if the message is scrollable
+            batper_message.determineScrollable()
+            
+        # If the message code is C::: --> charging status
+        if code == "C:::":
+            
+            # Update the battery charging variable
+            charge_message.setMessage(message[CODE_LEN:len(message)])
+            
+            # Check if the message is scrollable
+            charge_message.determineScrollable()
+            
     # Concatenate all messages into an array
-    message_array = [typed_message, time_message]
+    message_array = [typed_message, time_message, batper_message, charge_message]
+    
         
     # Loop through each message
     for m in message_array:
@@ -138,7 +146,32 @@ while True:
         
         # Draw the message
         m.drawMessage()
-    
+    """
+        
+        # Loop through each message/code
+        for i in range(len(message_array)):
+            
+            # Get current code and message
+            c = code_array[i]
+            m = message_array[i]
+            
+            # Check if the code matches the current message's code
+            if code == c:
+                
+                # Update the message variable
+                m.setMessage(message[CODE_LEN:len(message)])
+                
+                # Check if the message is scrollable
+                m.determineScrollable()
+                
+    # Display each message
+    for m in message_array:
+        
+        # Check if the message is scrollable
+        #m.determineScrollable()
+        
+        # Draw the message
+        m.drawMessage()
     
     oled.present()
         
