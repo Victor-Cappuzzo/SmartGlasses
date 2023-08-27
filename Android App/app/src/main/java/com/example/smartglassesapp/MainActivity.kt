@@ -4,12 +4,12 @@ import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
+import android.os.IBinder
 import android.os.Message
 import android.widget.Button
 import android.widget.EditText
@@ -30,17 +30,23 @@ import androidx.lifecycle.Observer
 class MainActivity : AppCompatActivity() {
 
     // Variable declaration
+    /*
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private lateinit var bluetoothSocket: BluetoothSocket
     private lateinit var outputStream: OutputStream
     private lateinit var bluetoothDevice: BluetoothDevice
+
+     */
+
     private lateinit var binding: ActivityMainBinding
     private var messageEditText: EditText? = null
     private var timeTextView: TextView? = null
     private var sendButton: Button? = null
     private var batteryTextView: TextView? = null
     private var chargingTextView: TextView? = null
-    lateinit var model: AppViewModel
+    private lateinit var model: AppViewModel
+    private lateinit var dataTransmissionService: DataTransmissionService
+    private var isDataTransmissionBound: Boolean = false
 
     private val messageQueue: Queue<String> = LinkedList()
     private var isSending: Boolean = false
@@ -62,6 +68,7 @@ class MainActivity : AppCompatActivity() {
         batteryTextView = binding.batteryTextView
         chargingTextView = binding.chargingTextView
 
+        /*
         // Set up bluetooth adapter
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
@@ -89,10 +96,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+         */
+
         // Listen for if the send button is pressed
         sendButton!!.setOnClickListener {
             val message = messageEditText!!.text.toString()
 
+            dataTransmissionService.addMessageToQueue("M:::$message")
+
+            /*
             synchronized(messageLock) {
                 // Add message to the queue
                 messageQueue.offer("M:::$message")
@@ -103,6 +115,8 @@ class MainActivity : AppCompatActivity() {
                     sendNextMessage()
                 }
             }
+
+             */
         }
 
 
@@ -110,6 +124,7 @@ class MainActivity : AppCompatActivity() {
         val dateTimeObserver = Observer<String> {newDateTime ->
                 timeTextView!!.text = newDateTime
 
+            /*
             synchronized(messageLock) {
                 // Add message to the queue
                 messageQueue.offer("T:::$newDateTime")
@@ -120,17 +135,21 @@ class MainActivity : AppCompatActivity() {
                     sendNextMessage()
                 }
             }
-            }
+
+             */
+        }
         model.getDateAndTime().observe(this, dateTimeObserver)
 
         // Start updating the date and time
-        model.updateDateAndTime()
+        model.updateDateAndTime(applicationContext)
+
 
 
         // Set observer for the current battery percentage
         val batteryPercentObserver = Observer<Int> {newPercent ->
             batteryTextView!!.text = "$newPercent%"
 
+            /*
             synchronized(messageLock) {
                 // Add message to the queue
                 messageQueue.offer("P:::$newPercent%")
@@ -141,6 +160,8 @@ class MainActivity : AppCompatActivity() {
                     sendNextMessage()
                 }
             }
+
+             */
         }
         model.getBatteryPercent().observe(this, batteryPercentObserver)
 
@@ -155,6 +176,7 @@ class MainActivity : AppCompatActivity() {
             if (isCharging) {
                 chargingTextView!!.text = "ON"
 
+                /*
                 synchronized(messageLock) {
                     // Add message to the queue
                     messageQueue.offer("C:::ON")
@@ -165,12 +187,15 @@ class MainActivity : AppCompatActivity() {
                         sendNextMessage()
                     }
                 }
+
+                 */
             }
 
             // If the phone is not charging
             else {
                 chargingTextView!!.text = "OFF"
 
+                /*
                 synchronized(messageLock) {
                     // Add message to the queue
                     messageQueue.offer("C:::OFF")
@@ -181,6 +206,8 @@ class MainActivity : AppCompatActivity() {
                         sendNextMessage()
                     }
                 }
+
+                 */
             }
 
         }
@@ -190,6 +217,33 @@ class MainActivity : AppCompatActivity() {
         model.updateBatteryCharging(applicationContext)
 
     }
+
+    override fun onStart() {
+        super.onStart()
+        val intent = Intent(this, DataTransmissionService::class.java)
+        bindService(intent, dataTransmissionServiceConnection, Context.BIND_AUTO_CREATE)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (isDataTransmissionBound) {
+            unbindService(dataTransmissionServiceConnection)
+            isDataTransmissionBound = false
+        }
+    }
+
+    private val dataTransmissionServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as DataTransmissionService.DataTransmissionBinder
+            dataTransmissionService = binder.getService()
+            isDataTransmissionBound = true
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            isDataTransmissionBound = false
+        }
+    }
+    /*
 
     // Sends the next message in the queue
     private fun sendNextMessage() {
@@ -249,4 +303,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+     */
 }

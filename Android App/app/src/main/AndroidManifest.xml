@@ -15,6 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SmartGlassesApp"
         tools:targetApi="31">
+        <service android:name=".DataTransmissionService" />
         <activity
             android:name=".MainActivity"
             android:exported="true">

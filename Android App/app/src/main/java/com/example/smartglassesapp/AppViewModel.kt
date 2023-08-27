@@ -4,19 +4,16 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
-import android.widget.TextView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.*
-import java.lang.Math.abs
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 
 class AppViewModel: ViewModel() {
 
@@ -56,9 +53,22 @@ class AppViewModel: ViewModel() {
         currentBatteryChargingLiveData.postValue(currentBatteryChargingLocal)
     }
 
+    // Defines the intent to start the DataTransmissionService
+    fun startDataTransmissionService(context: Context) {
+        val serviceIntent = Intent(context, DataTransmissionService::class.java)
+        context.startService(serviceIntent)
+    }
+
+    // Send a message to the DataTransmissionService
+    fun sendMessageToService(context: Context, message: String) {
+        val serviceIntent = Intent(context, DataTransmissionService::class.java)
+        serviceIntent.putExtra("message", message)
+        context.startService(serviceIntent)
+    }
+
 
     // Update the current date and time
-    fun updateDateAndTime() {
+    fun updateDateAndTime(context: Context) {
 
         timeDateJob.cancel()
 
@@ -68,7 +78,12 @@ class AppViewModel: ViewModel() {
                 currentDateTimeLocal = sdf.format(Date())
 
                 if (currentDateTimeLiveData.value != currentDateTimeLocal) {
+
+                    // Post live data to update the UI
                     currentDateTimeLiveData.postValue(currentDateTimeLocal)
+
+                    // Start the DataTransmissionService
+                    sendMessageToService(context, "T:::$currentDateTimeLocal")
                 }
 
                 delay(timeDateDelay)
@@ -104,7 +119,12 @@ class AppViewModel: ViewModel() {
 
                 // Check if the battery percentage actually changed
                 if (currentBatteryPercentLiveData.value != currentBatteryPercentLocal) {
+
+                    // Post live data to update the UI
                     currentBatteryPercentLiveData.postValue(currentBatteryPercentLocal)
+
+                    // Start the DataTransmissionService
+                    sendMessageToService(context, "P:::$currentBatteryPercentLocal")
                 }
 
                 delay(batteryPercentDelay)
@@ -140,7 +160,12 @@ class AppViewModel: ViewModel() {
 
                 // Check if the battery charging status actually changed
                 if (currentBatteryChargingLiveData.value != currentBatteryChargingLocal) {
+
+                    // Post live data to update the UI
                     currentBatteryChargingLiveData.postValue(currentBatteryChargingLocal)
+
+                    // Start the DataTransmissionService
+                    sendMessageToService(context, "C:::$currentBatteryChargingLocal")
                 }
 
                 delay(batteryChargingDelay)
