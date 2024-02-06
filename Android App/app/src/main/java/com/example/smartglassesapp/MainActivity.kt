@@ -1,6 +1,7 @@
 package com.example.smartglassesapp
 
 import android.Manifest
+import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
@@ -29,15 +30,7 @@ import androidx.lifecycle.Observer
 
 class MainActivity : AppCompatActivity() {
 
-    // Variable declaration
-    /*
-    private lateinit var bluetoothAdapter: BluetoothAdapter
-    private lateinit var bluetoothSocket: BluetoothSocket
-    private lateinit var outputStream: OutputStream
-    private lateinit var bluetoothDevice: BluetoothDevice
-
-     */
-
+    // Variable declarations
     private lateinit var binding: ActivityMainBinding
     private var messageEditText: EditText? = null
     private var timeTextView: TextView? = null
@@ -48,9 +41,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var dataTransmissionService: DataTransmissionService
     private var isDataTransmissionBound: Boolean = false
 
-    private val messageQueue: Queue<String> = LinkedList()
-    private var isSending: Boolean = false
-    private val messageLock = Object()
+    private val notificationReceiver = object: BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == "com.example.smartglassesapp.APP_STARTED") {
+                sendExistingNotifications(applicationContext)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,75 +65,19 @@ class MainActivity : AppCompatActivity() {
         batteryTextView = binding.batteryTextView
         chargingTextView = binding.chargingTextView
 
-        /*
-        // Set up bluetooth adapter
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-
-        // Get all devices that are paired via bluetooth with the phone
-        val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter.bondedDevices
-
-        // Find the HC-06 board as the bluetooth device
-        pairedDevices.let {
-            for (device: BluetoothDevice in it!!) {
-
-                // Permissions check
-                if (ActivityCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.BLUETOOTH_CONNECT
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    return
-                }
-
-                // If the devices name is "HC-06", then set it as our device
-                if (device.name == "HC-06") {
-                    bluetoothDevice = device
-                    break
-                }
-            }
-        }
-
-         */
-
         // Listen for if the send button is pressed
         sendButton!!.setOnClickListener {
             val message = messageEditText!!.text.toString()
-
-            dataTransmissionService.addMessageToQueue("M:::$message")
-
-            /*
-            synchronized(messageLock) {
-                // Add message to the queue
-                messageQueue.offer("M:::$message")
-
-                // Start sending if not already sending
-                if (!isSending) {
-                    isSending = true
-                    sendNextMessage()
-                }
+            if (isDataTransmissionBound) {
+                //dataTransmissionService.addMessageToQueue("M:::$message")
+                model.sendCustomMessage(applicationContext, message)
             }
-
-             */
         }
 
 
         // Set observer for the current time and date value
         val dateTimeObserver = Observer<String> {newDateTime ->
                 timeTextView!!.text = newDateTime
-
-            /*
-            synchronized(messageLock) {
-                // Add message to the queue
-                messageQueue.offer("T:::$newDateTime")
-
-                // Start sending if not already sending
-                if (!isSending) {
-                    isSending = true
-                    sendNextMessage()
-                }
-            }
-
-             */
         }
         model.getDateAndTime().observe(this, dateTimeObserver)
 
@@ -144,24 +85,9 @@ class MainActivity : AppCompatActivity() {
         model.updateDateAndTime(applicationContext)
 
 
-
         // Set observer for the current battery percentage
         val batteryPercentObserver = Observer<Int> {newPercent ->
             batteryTextView!!.text = "$newPercent%"
-
-            /*
-            synchronized(messageLock) {
-                // Add message to the queue
-                messageQueue.offer("P:::$newPercent%")
-
-                // Start sending if not already sending
-                if (!isSending) {
-                    isSending = true
-                    sendNextMessage()
-                }
-            }
-
-             */
         }
         model.getBatteryPercent().observe(this, batteryPercentObserver)
 
@@ -175,39 +101,11 @@ class MainActivity : AppCompatActivity() {
             // If the phone is charging
             if (isCharging) {
                 chargingTextView!!.text = "ON"
-
-                /*
-                synchronized(messageLock) {
-                    // Add message to the queue
-                    messageQueue.offer("C:::ON")
-
-                    // Start sending if not already sending
-                    if (!isSending) {
-                        isSending = true
-                        sendNextMessage()
-                    }
-                }
-
-                 */
             }
 
             // If the phone is not charging
             else {
                 chargingTextView!!.text = "OFF"
-
-                /*
-                synchronized(messageLock) {
-                    // Add message to the queue
-                    messageQueue.offer("C:::OFF")
-
-                    // Start sending if not already sending
-                    if (!isSending) {
-                        isSending = true
-                        sendNextMessage()
-                    }
-                }
-
-                 */
             }
 
         }
@@ -216,6 +114,16 @@ class MainActivity : AppCompatActivity() {
         // Start updating the battery charging status
         model.updateBatteryCharging(applicationContext)
 
+        // Register the BroadcastReceiver
+        val filter = IntentFilter("com.example.smartglassesapp.APP_STARTED")
+        registerReceiver(notificationReceiver, filter)
+
+        // Send existing notifications when the app starts
+        val appStartedIntent = Intent("com.example.smartglassesapp.APP_STARTED")
+        sendBroadcast(appStartedIntent)
+
+        // Send existing notifications
+        //sendExistingNotifications(applicationContext)
     }
 
     override fun onStart() {
@@ -232,6 +140,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // Unregister the BroadcastReceiver when the activity is destroyed
+        unregisterReceiver(notificationReceiver)
+    }
+
     private val dataTransmissionServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as DataTransmissionService.DataTransmissionBinder
@@ -243,66 +158,23 @@ class MainActivity : AppCompatActivity() {
             isDataTransmissionBound = false
         }
     }
-    /*
 
-    // Sends the next message in the queue
-    private fun sendNextMessage() {
+    private fun sendExistingNotifications(context: Context) {
 
-        synchronized(messageLock) {
+        // Get the current notification manager
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-            // If there are messages in the queue
-            if (messageQueue.isNotEmpty()) {
-                val message = messageQueue.poll()
+        // Get the active notifications
+        val activeNotifications = notificationManager.activeNotifications
 
-                // Start thread to send message
-                SendMessageThread(message).start()
-            }
+        // Send each notification app and count
+        for (notification in activeNotifications) {
+            val appName = notification.packageName
+            val notificationCount = activeNotifications.filter { it.packageName == appName}.size
 
-            // If there are no more messages in the queue
-            else {
-                isSending = false
-            }
+            // Send app name and count via Bluetooth DataTransmissionService
+            model.sendMessageToService(context,"N:::$appName,$notificationCount")
         }
     }
 
-    inner class SendMessageThread(val message: String): Thread() {
-        override fun run() {
-            try {
-                // HC-06 UUID
-                val uuid: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
-
-                // Permission check
-                if (ActivityCompat.checkSelfPermission(
-                        applicationContext,
-                        Manifest.permission.BLUETOOTH_CONNECT
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    return
-                }
-
-                // Set up and connect socket
-                bluetoothSocket = bluetoothDevice.createRfcommSocketToServiceRecord(uuid)
-                bluetoothSocket.connect()
-
-                // Send the message to the HC-06
-                outputStream = bluetoothSocket.outputStream
-                outputStream.write((message + "\n").toByteArray())
-                outputStream.flush()
-                outputStream.close()
-                bluetoothSocket.close()
-
-                // Display toast to indicate that data was send
-                runOnUiThread {
-                    Toast.makeText(applicationContext, "Message sent: $message", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-            } finally {
-                // Send next message in the queue
-                sendNextMessage()
-            }
-        }
-    }
-
-     */
 }

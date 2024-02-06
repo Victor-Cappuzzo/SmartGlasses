@@ -72,6 +72,12 @@ charge_y_pos = oled.height//2
 charge_message = Message("", charge_x_pos, charge_y_pos, font, rot, horz_offset, vert_offset, SCROLL_TIME, oled)
 
 # Define code array (NOTE: messages in the message_array must be in the same order as the code_array!)
+# Codes:
+# 	M --> Typed message (for debugging)
+#	T --> Time and date
+#	P --> Battery percentage
+#	C --> Charging status
+#	N --> Notification and count
 code_array = ["M:::", "T:::", "P:::", "C:::"]
 
 # Define message array

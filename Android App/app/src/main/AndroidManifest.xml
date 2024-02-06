@@ -16,6 +16,15 @@
         android:theme="@style/Theme.SmartGlassesApp"
         tools:targetApi="31">
         <service android:name=".DataTransmissionService" />
+        <service
+            android:name=".NotificationListener"
+            android:label="Notification Listener"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
         <activity
             android:name=".MainActivity"
             android:exported="true">

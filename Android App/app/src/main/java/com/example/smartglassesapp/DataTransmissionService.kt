@@ -47,10 +47,11 @@ class DataTransmissionService: Service() {
         fun getService(): DataTransmissionService = this@DataTransmissionService
     }
 
+
     override fun onBind(intent: Intent?): IBinder? {
-        //return binder
-        return null
+        return binder
     }
+
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 

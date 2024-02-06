@@ -1,5 +1,6 @@
 package com.example.smartglassesapp
 
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -39,6 +40,11 @@ class AppViewModel: ViewModel() {
     private lateinit var batteryChargingJob: Job
     private lateinit var batteryChargingScope: CoroutineScope
 
+    // Notification variables
+    private val notificationDelay: Long = 1000
+    private lateinit var notificationJob: Job
+    private lateinit var notificationScope: CoroutineScope
+
     init {
         timeDateJob = Job()
         timeDateScope = CoroutineScope(Dispatchers.IO + timeDateJob)
@@ -51,19 +57,21 @@ class AppViewModel: ViewModel() {
         batteryChargingJob = Job()
         batteryChargingScope = CoroutineScope(Dispatchers.IO + batteryChargingJob)
         currentBatteryChargingLiveData.postValue(currentBatteryChargingLocal)
+
+        notificationJob = Job()
+        notificationScope = CoroutineScope(Dispatchers.IO + notificationJob)
     }
 
-    // Defines the intent to start the DataTransmissionService
-    fun startDataTransmissionService(context: Context) {
-        val serviceIntent = Intent(context, DataTransmissionService::class.java)
-        context.startService(serviceIntent)
-    }
 
     // Send a message to the DataTransmissionService
     fun sendMessageToService(context: Context, message: String) {
         val serviceIntent = Intent(context, DataTransmissionService::class.java)
         serviceIntent.putExtra("message", message)
         context.startService(serviceIntent)
+    }
+
+    fun sendCustomMessage(context: Context, str: String) {
+        sendMessageToService(context, "M:::$str")
     }
 
 
@@ -177,5 +185,38 @@ class AppViewModel: ViewModel() {
     fun getBatteryCharging(): LiveData<Boolean> {
         return currentBatteryChargingLiveData
     }
+
+    /*
+    fun sendExistingNotifications(context: Context) {
+
+        notificationJob.cancel()
+
+        notificationJob = CoroutineScope(Dispatchers.IO).launch {
+
+            while(true) {
+
+                // Get the current notification manager
+                val notificationManager =
+                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+                // Get the active notifications
+                val activeNotifications = notificationManager.activeNotifications
+
+                // Send each notification app and count
+                for (notification in activeNotifications) {
+                    val appName = notification.packageName
+                    val notificationCount =
+                        activeNotifications.filter { it.packageName == appName }.size
+
+                    // Send app name and count via Bluetooth DataTransmissionService
+                    sendMessageToService(context, "N:::$appName,$notificationCount")
+                }
+
+                delay(notificationDelay)
+            }
+        }
+    }
+
+     */
 
 }
