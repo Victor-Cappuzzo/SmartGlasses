@@ -31,6 +31,7 @@ class NotificationListener: NotificationListenerService() {
 
      */
 
+    /*
     // This is called when a new notification is posted
     override fun onNotificationPosted(sbn: StatusBarNotification) {
 
@@ -66,6 +67,44 @@ class NotificationListener: NotificationListenerService() {
         val serviceIntent = Intent(context, DataTransmissionService::class.java)
         serviceIntent.putExtra("message", message)
         context.startService(serviceIntent)
+    }
+
+     */
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        Log.d(TAG, "Notification Listener connected")
+        printNotifications()
+    }
+
+    override fun onNotificationPosted(sbn: StatusBarNotification) {
+        super.onNotificationPosted(sbn)
+        Log.d(TAG, "Notification posted: ${sbn.packageName}")
+        printNotifications()
+    }
+
+    override fun onNotificationRemoved(sbn: StatusBarNotification) {
+        super.onNotificationRemoved(sbn)
+        Log.d(TAG, "Notification removed: ${sbn.packageName}")
+        printNotifications()
+    }
+
+    private fun printNotifications() {
+        val activeNotifications = activeNotifications
+        val notificationCounts = mutableMapOf<String, Int>()
+
+        for (sbn in activeNotifications) {
+            val packageName = sbn.packageName
+            notificationCounts[packageName] = notificationCounts.getOrDefault(packageName, 0) + 1
+        }
+
+        for ((packageName, count) in notificationCounts) {
+            Log.d(TAG, "$packageName: $count")
+        }
+    }
+
+    companion object {
+        private const val TAG = "NotificationListener"
     }
 
 }

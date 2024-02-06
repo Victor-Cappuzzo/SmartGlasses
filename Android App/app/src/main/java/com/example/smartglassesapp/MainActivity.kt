@@ -55,6 +55,11 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Start the NotificationListenerService
+        if (!isNotificationServiceEnabled()) {
+            startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
+        }
+
         // Initialize view model
         model = ViewModelProvider(this).get(AppViewModel::class.java)
 
@@ -124,6 +129,7 @@ class MainActivity : AppCompatActivity() {
 
         // Send existing notifications
         //sendExistingNotifications(applicationContext)
+
     }
 
     override fun onStart() {
@@ -159,10 +165,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /*
     private fun sendExistingNotifications(context: Context) {
 
         // Get the current notification manager
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         // Get the active notifications
         val activeNotifications = notificationManager.activeNotifications
@@ -170,11 +178,19 @@ class MainActivity : AppCompatActivity() {
         // Send each notification app and count
         for (notification in activeNotifications) {
             val appName = notification.packageName
-            val notificationCount = activeNotifications.filter { it.packageName == appName}.size
+            val notificationCount = activeNotifications.filter { it.packageName == appName }.size
 
             // Send app name and count via Bluetooth DataTransmissionService
-            model.sendMessageToService(context,"N:::$appName,$notificationCount")
+            model.sendMessageToService(context, "N:::$appName,$notificationCount")
         }
+    }
+
+     */
+
+    private fun isNotificationServiceEnabled(): Boolean {
+        val componentName = ComponentName(this, NotificationListener::class.java)
+        val enabledListeners = NotificationListenerService.getEnabledListenerPackages(this)
+        return enabledListeners.contains(componentName.packageName)
     }
 
 }
