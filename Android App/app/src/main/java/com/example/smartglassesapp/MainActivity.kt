@@ -8,10 +8,7 @@ import android.bluetooth.BluetoothSocket
 import android.content.*
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.os.Handler
-import android.os.IBinder
-import android.os.Message
+import android.service.notification.NotificationListenerService
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -27,6 +24,9 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
 import androidx.lifecycle.Observer
+import android.content.ComponentName
+import android.os.*
+import android.provider.Settings
 
 class MainActivity : AppCompatActivity() {
 
@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
     private val notificationReceiver = object: BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.example.smartglassesapp.APP_STARTED") {
-                sendExistingNotifications(applicationContext)
+                //sendExistingNotifications(applicationContext)
             }
         }
     }
@@ -189,8 +189,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun isNotificationServiceEnabled(): Boolean {
         val componentName = ComponentName(this, NotificationListener::class.java)
-        val enabledListeners = NotificationListenerService.getEnabledListenerPackages(this)
-        return enabledListeners.contains(componentName.packageName)
+        val flat: String = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
+        return flat != null && flat.contains(componentName.flattenToString())
     }
 
 }
