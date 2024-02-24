@@ -95,7 +95,7 @@ def main():
 
             # If the line does not start with a '#' or '\n'
             if line[0] != '#' and line[0] != '\n':
-                  print(line)
+                  #print(line)
                   # Remove any spaces from the line, in case the user entered them
                   line = line.replace(" ", "")
 
@@ -169,6 +169,16 @@ def main():
       # Create the glasses
       glasses = Glasses(FRAME_X, FRAME_Z, FRAME_WIDTH, FRAME_HEIGHT, TEMPLE_Z, TEMPLE_LEN)
 
+      # Set up plot
+      fig = plt.figure()
+      ax = fig.add_subplot(projection='3d')
+      ax.set_xlabel('X')
+      ax.set_ylabel('Y')
+      ax.set_zlabel('Z')
+
+      # Plot screen
+      screen.plot_screen()
+
       # Loop through each mirror
       for i in range(len(mirrors)):
 
@@ -184,18 +194,40 @@ def main():
                   # Set incident vector from screen
                   m.set_incident_vector(screen.normal[0], screen.normal[1], screen.normal[2])
 
+                  # Calculate reflection vector from screen
+                  m.calc_reflection_vector()
+
                   # Set point of current plane from screen
                   m.set_center_point(screen.x, screen.y, screen.z)
 
                   # Calculate the intersection points from screen to first mirror
                   m.calc_intersect_points(screen.intersect_points)
 
+                  # Plot the current plane and rays going into this plane
+                  m.plot_mirror(screen.intersect_points)
+
 
             # If i != 0, then we need to get the incident vector from the previous mirror
-            #else:
+            else:
 
+                  # Get previous mirror
+                  mm1 = mirrors[i-1]
 
+                  # Set incident vector from previous mirror
+                  mm1.set_incident_vector(mm1.normal[0], mm1.normal[1], mm1.normal[2])
 
+                  # Calculate reflection vector from previous mirror
+                  mm1.calc_reflection_vector()
+
+                  # Set point of current plane from previous mirror
+                  mm1.set_center_point(mm1.x, mm1.y, mm1.z)
+
+                  # Calculate the intersection points from previous mirror to current mirror
+                  mm1.calc_intersect_points(mm1.intersect_points)
+
+                  # Plot the current plane and rays going into this plane
+
+      """
       # ________________________________________________________________________
       # Plot mirror 1
       R1 = [[1, 0,                0              ],
@@ -229,6 +261,9 @@ def main():
       fig = plt.figure()
       ax = fig.add_subplot(projection='3d')
       ax.plot_surface(xx, yy, z)
+      plt.show()
+      """
+
       plt.show()
 
       """

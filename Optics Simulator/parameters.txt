@@ -7,8 +7,8 @@ screen_theta1=90
 screen_theta2=0
 
 mirror_1=45,0,60
-mirror_2=-45,-90,40
-mirror_3=-135,-90,20
+#mirror_2=-45,-90,40
+#mirror_3=-135,-90,20
 
 frame_x=40
 frame_z=-15
