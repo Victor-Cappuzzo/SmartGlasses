@@ -3,8 +3,8 @@ import numpy as np
 
 class Screen():
     def __init__(self, theta1, theta2, width, height, x, y, z):
-        self.theta1 = theta1
-        self.theta2 = theta2
+        self.theta1 = theta1 * math.pi / 180
+        self.theta2 = theta2 * math.pi / 180
         self.width = width
         self.height = height
         self.x = x
@@ -19,6 +19,10 @@ class Screen():
         R2 = [[ math.cos(self.theta2), 0, math.sin(self.theta2)],
               [ 0,               1,    0                       ],
               [-math.sin(self.theta2), 0, math.cos(self.theta2)]]
+        
+        # Calculate normal vector of screen
+        # The unrotated normal vector is the Z-axis
+        self.normal = np.dot(R2, np.dot(R1, np.array([0, 0, 1])))
 
         # Variables for the point where each of the 9 rays will start
         #   In form of [x, y, z] for each point

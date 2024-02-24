@@ -33,9 +33,6 @@ SCREEN_THETA2 = None
 # Define mirror array
 mirrors = []
 
-# Define the number of mirrors that will be used
-num_mir = None
-
 # Define mirrors
 # mirror = [theta1, theta2, len]
 #
@@ -172,13 +169,32 @@ def main():
       # Create the glasses
       glasses = Glasses(FRAME_X, FRAME_Z, FRAME_WIDTH, FRAME_HEIGHT, TEMPLE_Z, TEMPLE_LEN)
 
-      # screen = Screen(90, 0, screen_width, screen_height, screen_x, screen_y, screen_z)
+      # Loop through each mirror
+      for i in range(len(mirrors)):
 
-      # mirror1 = Mirror(45, 0, 60)
-      # mirror2 = Mirror(-45, -90, 40)
-      # mirror3 = Mirror(-135, -90, 20)
+            # Get current mirror
+            m = mirrors[i]
 
-      # mirrors = [mirror1, mirror2, mirror3]
+            # Get the incident vector of the previous mirror/screen
+
+            # If i = 0, then we need to get the incident vector from the screen, which is
+            # just the screen's normal vector
+            if i == 0:
+
+                  # Set incident vector from screen
+                  m.set_incident_vector(screen.normal[0], screen.normal[1], screen.normal[2])
+
+                  # Set point of current plane from screen
+                  m.set_center_point(screen.x, screen.y, screen.z)
+
+                  # Calculate the intersection points from screen to first mirror
+                  m.calc_intersect_points(screen.intersect_points)
+
+
+            # If i != 0, then we need to get the incident vector from the previous mirror
+            #else:
+
+
 
       # ________________________________________________________________________
       # Plot mirror 1
@@ -221,7 +237,7 @@ def main():
       1. From .txt file, get screen size, and position of center (the screen is just another mirror/plane)
       2. Define starting points on the screen for each of the 9 light rays (in screen object)
       3. For each plane:
-            a. Calculate rotation matrices to then find normal vector from theta1 and theta2
+            a. Calculate rotation matrices to then find normal vector from theta1 and theta2 (in Mirror object)
             b. Get the direction of the rays coming from the n-1th plane
             c. Calculate the end point of the center ray using the n-1th mirror's center point and the nth mirror's len
             d. Use the point and normal vector to define the plane (update mirror's parameters)
