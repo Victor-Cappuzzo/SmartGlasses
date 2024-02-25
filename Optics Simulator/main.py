@@ -172,12 +172,16 @@ def main():
       # Set up plot
       fig = plt.figure()
       ax = fig.add_subplot(projection='3d')
+      scale = 100
+      ax.axes.set_xlim3d(left=-scale, right=scale) 
+      ax.axes.set_ylim3d(bottom=-scale, top=scale) 
+      ax.axes.set_zlim3d(bottom=-scale, top=scale) 
       ax.set_xlabel('X')
       ax.set_ylabel('Y')
       ax.set_zlabel('Z')
 
       # Plot screen
-      screen.plot_screen()
+      screen.plot_screen(ax)
 
       # Loop through each mirror
       for i in range(len(mirrors)):
@@ -191,7 +195,7 @@ def main():
             # just the screen's normal vector
             if i == 0:
 
-                  # Set incident vector from screen
+                  # Set incident vector from screen, which for the screen, incident = normal
                   m.set_incident_vector(screen.normal[0], screen.normal[1], screen.normal[2])
 
                   # Calculate reflection vector from screen
@@ -204,7 +208,7 @@ def main():
                   m.calc_intersect_points(screen.intersect_points)
 
                   # Plot the current plane and rays going into this plane
-                  m.plot_mirror(screen.intersect_points)
+                  m.plot_mirror(screen.intersect_points, ax)
 
 
             # If i != 0, then we need to get the incident vector from the previous mirror
@@ -214,55 +218,31 @@ def main():
                   mm1 = mirrors[i-1]
 
                   # Set incident vector from previous mirror
-                  mm1.set_incident_vector(mm1.normal[0], mm1.normal[1], mm1.normal[2])
+                  #     This is the previous mirror's reflection vector
+                  m.set_incident_vector(mm1.reflection[0], mm1.reflection[1], mm1.reflection[2])
 
                   # Calculate reflection vector from previous mirror
-                  mm1.calc_reflection_vector()
+                  m.calc_reflection_vector()
 
                   # Set point of current plane from previous mirror
-                  mm1.set_center_point(mm1.x, mm1.y, mm1.z)
+                  m.set_center_point(mm1.x, mm1.y, mm1.z)
 
                   # Calculate the intersection points from previous mirror to current mirror
-                  mm1.calc_intersect_points(mm1.intersect_points)
+                  m.calc_intersect_points(mm1.intersect_points)
 
                   # Plot the current plane and rays going into this plane
+                  m.plot_mirror(mm1.intersect_points, ax)
 
-      """
-      # ________________________________________________________________________
-      # Plot mirror 1
-      R1 = [[1, 0,                0              ],
-            [0, math.cos(m1_t1), -math.sin(m1_t1)],
-            [0, math.sin(m1_t1),  math.cos(m1_t1)]]
-
-      R2 = [[ math.cos(m1_t2), 0, math.sin(m1_t2)],
-            [ 0,               1, 0              ],
-            [-math.sin(m1_t2), 0, math.cos(m1_t2)]]
-
-      #n1 = R2*R1*np.array([0, 0, 1])
-      n1 = np.dot(R2, np.dot(R1, np.array([0, 0, 1])))
-
-      # Plot planes
-      # Point = (x, y, z)
-      # Normal = [a b c]
-      point = np.array([SCREEN_X, SCREEN_Y + m1_len, SCREEN_Z])
-      normal = np.array(n1)
-
-      # A plane in point normal form is a*x + b*y + c*z + d = 0
-      # d = -(a*x + b*y + c*z) = -point . normal
-      d = -point.dot(normal)
-
-      xx, yy = np.meshgrid(range(10), range(10))
-
-      # Calculate z
-      # z = -(a*x + b*y + d)/c
-      z = -(normal[0]*xx + normal[1]*yy)/normal[2]
-
-      # Plot
-      fig = plt.figure()
-      ax = fig.add_subplot(projection='3d')
-      ax.plot_surface(xx, yy, z)
-      plt.show()
-      """
+      # Get nth mirror
+      mn = mirrors[len(mirrors)-1]
+      
+      # Calculate intersection points on the glasses frame from the last mirror
+      glasses.set_incident_vector(mn.x, mn.y, mn.z)
+      glasses.calc_reflection_vector()
+      glasses.calc_intersect_points(mn.intersect_points)
+      
+      # Plot glasses
+      glasses.plot_glasses(mn.intersect_points)
 
       plt.show()
 
