@@ -1,3 +1,66 @@
+#include "U8glib.h"
+
+// (Clock, Data in, CS, A0, Reset)
+//U8GLIB_LD7032_60x32 u8g(9, 8, 11, 10, 12);
+#define CLOCK_PIN D8
+#define DATA_PIN D10
+#define CS_PIN D0
+#define A0_PIN D1
+#define RESET_PIN D2
+U8GLIB_LD7032_60x32 u8g(CLOCK_PIN, DATA_PIN, CS_PIN, A0_PIN, RESET_PIN);
+
+void setup(void) {
+}
+const uint8_t rook_bitmap[] PROGMEM = {
+  0x00,         // 00000000
+  0x55,         // 01010101
+  0x7f,          // 01111111
+  0x3e,         // 00111110
+  0x3e,         // 00111110
+  0x3e,         // 00111110
+  0x3e,         // 00111110
+  0x7f           // 01111111
+};
+
+void loop(void) {
+  // picture loop
+  u8g.firstPage();
+  do {
+    u8g.setFont(u8g_font_unifont);
+    //       u8g.setFont(u8g_font_osb21);
+    u8g.drawStr( 5, 20, "DFROBOT");
+  } while ( u8g.nextPage() );
+  delay(1000);
+  u8g.firstPage();
+  do {
+    u8g.drawCircle(30, 20, 18);
+    u8g.drawEllipse(26, 12, 7, 5,U8G_DRAW_UPPER_LEFT );
+    u8g.drawEllipse(34, 12, 7, 5, U8G_DRAW_UPPER_RIGHT);
+    u8g.drawTriangle(30,14, 27, 18, 33, 18);
+    u8g.drawFilledEllipse( 30, 25, 10,5, U8G_DRAW_LOWER_LEFT);
+    u8g.drawFilledEllipse( 30, 25, 10,5, U8G_DRAW_LOWER_RIGHT);
+    u8g.drawLine(30, 13, 30, 16);
+
+
+    u8g.drawFrame(0, 0,60 ,32);
+
+  } while ( u8g.nextPage() );
+  delay(5000);
+
+  u8g.firstPage();
+  do {
+    u8g.drawBitmapP(30, 16,1, 8, rook_bitmap);
+  } while ( u8g.nextPage() );
+  delay(1000);
+  u8g.firstPage();
+  do {
+
+  } while ( u8g.nextPage() );
+  delay(2000);
+
+}
+
+/**
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -98,3 +161,4 @@ void loop() {
         display.display();
     }
 }
+**/
