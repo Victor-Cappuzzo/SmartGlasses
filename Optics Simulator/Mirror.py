@@ -26,7 +26,7 @@ class Mirror():
         # The unrotated normal vector is the Z-axis
         self.normal = np.dot(R2, np.dot(R1, np.array([0, 0, 1])))
         self.a, self.b, self.c = self.normal
-        print("Normal: ", self.normal)
+        #print("Normal: ", self.normal)
 
         # Variables for the vector of incidence [a_in b_in c_in]
         self.incident = [0, 0, 0]
@@ -52,14 +52,14 @@ class Mirror():
     # Set the incident vector from the previous mirror coming into the current mirror
     def set_incident_vector(self, a, b, c):
         self.incident = [a, b, c]
-        print("Incident: ", self.incident)
+        #print("Incident: ", self.incident)
 
     # Calculate the reflection vector
     def calc_reflection_vector(self):
 
         # Reflection vector
         self.reflection = self.incident - 2*(np.dot(self.incident, self.normal))*self.normal
-        print("Reflection: ", self.reflection)
+        #print("Reflection: ", self.reflection)
 
     # Assign the plane's center point given a start point and using the incident vector and len
     def set_center_point(self, x0, y0, z0):
@@ -73,7 +73,7 @@ class Mirror():
         self.x = delta_x + x0
         self.y = delta_y + y0
         self.z = delta_z + z0
-        print("Center point: ", [self.x, self.y, self.z])
+        #print("Center point: ", [self.x, self.y, self.z])
 
     # Calculate the intersection points of the plane
     def calc_intersect_points(self, points):
@@ -98,7 +98,7 @@ class Mirror():
             #   Here, r0 = (r0x, r0y, r0z) is the starting point of the incident ray to this mirror
             # t = (-d - a*r0x - b*r0y - c*r0z) / (a*vx + b*vy + c*vz)
             t = (-d - self.a*r0[0] - self.b*r0[1] - self.c*r0[2]) / (self.a*self.incident[0] + self.b*self.incident[1] + self.c*self.incident[2])
-            print("t: ", t)
+            #print("t: ", t)
 
             # Calculate points of intersection
             self.intersect_points[i][0] = r0[0] + t*self.incident[0]
@@ -119,7 +119,7 @@ class Mirror():
 
             # Plot ray
             plt.plot([r0[0], r[0]], [r0[1], r[1]], [r0[2], r[2]])
-            print("r0: ", r0, "     r: ", r)
+            #print("r0: ", r0, "     r: ", r)
 
         # Put X intersect points into a 3x3 grid
         xx = [[self.intersect_points[1][0], self.intersect_points[2][0], self.intersect_points[3][0]],

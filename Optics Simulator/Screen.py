@@ -24,7 +24,7 @@ class Screen():
         # Calculate normal vector of screen
         # The unrotated normal vector is the Z-axis
         self.normal = np.dot(R2, np.dot(R1, np.array([0, 0, 1])))
-        print("Screen normal: ", self.normal)
+        #print("Screen normal: ", self.normal)
 
         # Variables for the point where each of the 9 rays will start
         #   In form of [x, y, z] for each point

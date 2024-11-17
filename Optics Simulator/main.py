@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from Mirror import Mirror
 from Screen import Screen
 from Glasses import Glasses
+from Eye import Eye
 
 # ________________________________________________________________________
 ''' INPUT VARIABLES VARIABLES '''
@@ -81,7 +82,16 @@ FRAME_HEIGHT = None
 TEMPLE_Z = None
 TEMPLE_LEN = None
 
+# ________________________________________________________________________
+''' EYE VARIABLES '''
+EYE_X = None
+EYE_Y = None
+EYE_Z = None
+EYE_R = None
 
+# Eye =  [x, y, z, radius]
+# The eye's normal vector is defined as the +Y axis
+# Used to determine how good the optics setup is at getting the image to the user
 
 
 def main():
@@ -146,6 +156,20 @@ def main():
                   elif name == "temple_len":
                         TEMPLE_LEN = float(value)
 
+                  # Eye parameters
+                  elif name == "eye_x":
+                        EYE_X = float(value)
+
+                  elif name == "eye_y":
+                        EYE_Y = float(value)
+
+                  elif name == "eye_z":
+                        EYE_Z = float(value)
+
+                  elif name == "eye_r":
+                        EYE_R = float(value)
+
+
                   # Mirror parameters
                   elif "mirror" in name:
                         
@@ -169,10 +193,13 @@ def main():
       # Create the glasses
       glasses = Glasses(FRAME_X, FRAME_Z, FRAME_WIDTH, FRAME_HEIGHT, TEMPLE_Z, TEMPLE_LEN)
 
+      # Create the eye
+      eye = Eye(EYE_X, EYE_Y, EYE_Z, EYE_R)
+
       # Set up plot
       fig = plt.figure()
       ax = fig.add_subplot(projection='3d')
-      scale = 100
+      scale = 50
       ax.axes.set_xlim3d(left=-scale, right=scale) 
       ax.axes.set_ylim3d(bottom=-scale, top=scale) 
       ax.axes.set_zlim3d(bottom=-scale, top=scale) 
@@ -233,16 +260,43 @@ def main():
                   # Plot the current plane and rays going into this plane
                   m.plot_mirror(mm1.intersect_points, ax)
 
-      # Get nth mirror
-      mn = mirrors[len(mirrors)-1]
+      if len(mirrors) > 0:
+
+            # Get nth mirror
+            mn = mirrors[-1]
+
+            # Calculate intersection points on the glasses frame from the last mirror
+            glasses.set_incident_vector(mn.reflection[0], mn.reflection[1], mn.reflection[2])
+            glasses.calc_reflection_vector()
+            glasses.calc_intersect_points(mn.intersect_points)
       
-      # Calculate intersection points on the glasses frame from the last mirror
-      glasses.set_incident_vector(mn.x, mn.y, mn.z)
-      glasses.calc_reflection_vector()
-      glasses.calc_intersect_points(mn.intersect_points)
+            # Plot glasses
+            glasses.plot_glasses(mn.intersect_points)
+
+      else:
+
+            # Get screen
+            mn = screen
+
+            # Calculate intersection points on the glasses frame from the last mirror
+            glasses.set_incident_vector(mn.normal[0], mn.normal[1], mn.normal[2])
+            glasses.calc_reflection_vector()
+            glasses.calc_intersect_points(mn.intersect_points)
       
-      # Plot glasses
-      glasses.plot_glasses(mn.intersect_points)
+            # Plot glasses
+            glasses.plot_glasses(mn.intersect_points)
+      
+      
+
+      # Calculate intersection points on the eye from the glasses frame
+      eye.set_incident_vector(glasses.reflection[0], glasses.reflection[1], glasses.reflection[2])
+      eye.calc_intersect_points(glasses.intersect_points)
+
+      # Plot eye
+      eye.plot_eye(glasses.intersect_points)
+
+      # Print how many rays successfully reached the eye
+      print("Success: ", eye.success)
 
       plt.show()
 

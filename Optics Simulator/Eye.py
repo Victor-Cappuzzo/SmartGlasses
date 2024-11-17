@@ -1,32 +1,19 @@
 import numpy as np
-import math as m
+import math
 import matplotlib.pyplot as plt
 
-class Glasses():
-
-    def __init__(self, frame_x, frame_z, frame_width, frame_height, temple_z, temple_len):
-
-        # Frame variables
-        self.frame_x = frame_x
-        self.frame_y = 0
-        self.frame_z = frame_z
-        self.frame_width = frame_width
-        self.frame_height = frame_height
-
-        # Temple variables
-        self.temple_x = self.frame_x + self.frame_width/2
-        self.temple_y = 0
-        self.temple_z = temple_z
-        self.temple_len = temple_len
+class Eye():
+    def __init__(self, x, y, z, radius):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.radius = radius
 
         # Plane variables for frame to act as a mirror
-        self.normal  = self.a, self.b, self.c = np.array([0, -1, 0]) # Normal vector set as the negative Y axis
+        self.normal  = self.a, self.b, self.c = np.array([0, 1, 0]) # Normal vector set as the +Y axis
 
         # Variables for the vector of incidence [a_in b_in c_in]
         self.incident = [0, 0, 0]
-
-        # Variables for vector of reflection [a_out b_out c_out]
-        self.reflection = [0, 0, 0]
 
         # Variables for the point where each of the 9 rays intersect the plane
         #   In form of [x, y, z] for each point
@@ -42,18 +29,14 @@ class Glasses():
                                  [0, 0, 0], # Bottom left
                                  [0, 0, 0], # Bottom center
                                  [0, 0, 0],]) # Bottom right
-    
+        
+        # Variable for how many of the intersect points actually are on the eye
+        self.success = 0
+        
     # Set the incident vector from the previous mirror coming into the current mirror
     def set_incident_vector(self, a, b, c):
         self.incident = [a, b, c]
         #print("Incident: ", self.incident)
-
-    # Calculate the reflection vector
-    def calc_reflection_vector(self):
-
-        # Reflection vector
-        self.reflection = self.incident - 2*(np.dot(self.incident, self.normal))*self.normal
-        #print("Reflection: ", self.reflection)
 
     # Calculate the intersection points of the plane
     def calc_intersect_points(self, points):
@@ -67,7 +50,7 @@ class Glasses():
             # Calculate d
             # A plane in point normal form is a*x + b*y + c*z + d = 0
             # d = -(a*x + b*y + c*z) = -point . normal
-            center = [self.frame_x, self.frame_y, self.frame_z]
+            center = [self.x, self.y, self.z]
             d = -np.array(center).dot([self.a, self.b, self.c])
 
             # Calculate t from p0, normal, and center point
@@ -85,22 +68,19 @@ class Glasses():
             self.intersect_points[i][1] = r0[1] + t*self.incident[1]
             self.intersect_points[i][2] = r0[2] + t*self.incident[2]
 
-    def plot_glasses(self, start_points):
+    def plot_eye(self, start_points):
 
-        # Calculate corners of frame rectangle from the perspective of the person wearing them
-        tl = [self.frame_x - self.frame_width/2, self.frame_y, self.frame_z + self.frame_height/2]
-        tr = [self.frame_x + self.frame_width/2, self.frame_y, self.frame_z + self.frame_height/2]
-        br = [self.frame_x + self.frame_width/2, self.frame_y, self.frame_z - self.frame_height/2]
-        bl = [self.frame_x - self.frame_width/2, self.frame_y, self.frame_z - self.frame_height/2]
+        # Calculate corners of eye rectangle from the perspective of the person wearing them
+        tl = [self.x - self.radius, self.y, self.z + self.radius]
+        tr = [self.x + self.radius, self.y, self.z + self.radius]
+        br = [self.x + self.radius, self.y, self.z - self.radius]
+        bl = [self.x - self.radius, self.y, self.z - self.radius]
 
-        # Plot the frame as a rectangle
+        # Plot the eye as a rectangle
         plt.plot([tl[0], tr[0]], [tl[1], tr[1]], [tl[2], tr[2]], color="black") # tl to tr
         plt.plot([tr[0], br[0]], [tr[1], br[1]], [tr[2], br[2]], color="black") # tr to br
         plt.plot([br[0], bl[0]], [br[1], bl[1]], [br[2], bl[2]], color="black") # br to bl
         plt.plot([bl[0], tl[0]], [bl[1], tl[1]], [bl[2], tl[2]], color="black") # bl to tl
-
-        # Plot the temple as a line
-        plt.plot([self.temple_x, self.temple_x], [self.temple_y - self.temple_len, self.temple_y], [self.temple_z, self.temple_z], color="black")
 
         # Loop through each start point and intersection points of the plane
         for i in range(len(start_points)):
@@ -112,5 +92,12 @@ class Glasses():
             r = self.intersect_points[i]
 
             # Plot ray
-            plt.plot([r0[0], r[0]], [r0[1], r[1]], [r0[2], r[2]])
+            #plt.plot([r0[0], r[0]], [r0[1], r[1]], [r0[2], r[2]])
             #print("r0: ", r0, "     r: ", r)
+
+            # Determine if the current intersect point is actually on the eye
+            if r[0] >= self.x - self.radius and r[0] <= self.x + self.radius:
+                if r[2] >= self.z - self.radius and r[2] <= self.z + self.radius:
+                    
+                    plt.plot([r0[0], r[0]], [r0[1], r[1]], [r0[2], r[2]])
+                    self.success += 1

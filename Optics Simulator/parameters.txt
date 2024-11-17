@@ -1,14 +1,14 @@
-screen_width=10.2
-screen_height=15.3
-screen_x=85
+screen_width=35
+screen_height=15
+screen_x=90
 screen_y=-100
-screen_z=3
-screen_theta1=-90
-screen_theta2=0
+screen_z=-20
+screen_theta1=-70
+screen_theta2=-90
 
-mirror_1=-45,0,60
-mirror_2=0,-45,40
-mirror_3=-135,-90,20
+#mirror_1=-45,0,80
+#mirror_2=-25,-30,30
+#mirror_3=-135,-100,20
 
 frame_x=40
 frame_z=-15
@@ -17,4 +17,9 @@ frame_height=42
 
 temple_z=5
 temple_len=130
+
+eye_x=40
+eye_y=-10
+eye_z=-15
+eye_r=10
 
