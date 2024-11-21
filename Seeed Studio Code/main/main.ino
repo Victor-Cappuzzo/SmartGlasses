@@ -1,14 +1,33 @@
-#include "U8glib.h"
+//#include "U8glib.h"
+#include <Arduino.h>
+#include <U8g2lib.h>
+#include <SPI.h>
+#include <Wire.h>
 
 // (Clock, Data in, CS, A0, Reset)
 //U8GLIB_LD7032_60x32 u8g(9, 8, 11, 10, 12);
-#define CLOCK_PIN D8
-#define DATA_PIN D10
-#define CS_PIN D0
-#define A0_PIN D1
-#define RESET_PIN D2
-U8GLIB_LD7032_60x32 u8g(CLOCK_PIN, DATA_PIN, CS_PIN, A0_PIN, RESET_PIN);
+#define CLOCK_PIN 8
+#define DATA_PIN 10
+#define CS_PIN 2
+#define A0_PIN 3
+#define RESET_PIN 4
+//U8GLIB_LD7032_60x32 u8g(CLOCK_PIN, DATA_PIN, CS_PIN, A0_PIN, RESET_PIN);
+U8G2_LD7032_60X32_1_4W_SW_SPI u8g2(U8G2_R0, CLOCK_PIN, DATA_PIN, CS_PIN, A0_PIN, RESET_PIN);
 
+void setup(void) {
+  u8g2.begin();
+}
+
+void loop(void) {
+  u8g2.firstPage();
+  do {
+    u8g2.setFont(u8g2_font_ncenB14_tr);
+    u8g2.drawStr(0,24,"Hello World!");
+  } while ( u8g2.nextPage() );
+}
+
+
+/**
 void setup(void) {
 }
 const uint8_t rook_bitmap[] PROGMEM = {
@@ -59,6 +78,7 @@ void loop(void) {
   delay(2000);
 
 }
+**/
 
 /**
 #include <SPI.h>
